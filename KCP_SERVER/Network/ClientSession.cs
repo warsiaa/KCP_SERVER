@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using kcp;
 using KCP_SERVER.Protocol;
+using KCP_SERVER.Utils;
 
 namespace KCP_SERVER.Network
 {
@@ -103,7 +105,15 @@ namespace KCP_SERVER.Network
                             byte[] msg = _rxBuffer.GetRange(2, msgLen).ToArray();
                             _rxBuffer.RemoveRange(0, msgLen + 2);
 
-                            onMessage(this, msg);
+                            try
+                            {
+                                var decrypted = PacketCrypto.Decrypt(msg);
+                                onMessage(this, decrypted);
+                            }
+                            catch (CryptographicException)
+                            {
+                                Console.WriteLine($"[SECURITY] Dropped invalid packet from {Remote}.");
+                            }
                         }
                     }
                 }
@@ -119,7 +129,15 @@ namespace KCP_SERVER.Network
         // ================================
         public void Send(byte[] payload)
         {
-            var framed = MessageBuilder.Frame(payload);
+            if (payload.Length + PacketCrypto.EncryptionOverhead > ushort.MaxValue)
+            {
+                throw new InvalidOperationException(
+                    $"Payload too large to encrypt and frame. Max plaintext length is {ushort.MaxValue - PacketCrypto.EncryptionOverhead} bytes."
+                );
+            }
+
+            var encrypted = PacketCrypto.Encrypt(payload);
+            var framed = MessageBuilder.Frame(encrypted);
 
             fixed (byte* p = framed)
             {
