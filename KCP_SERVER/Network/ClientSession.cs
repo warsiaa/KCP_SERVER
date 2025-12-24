@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Net;
@@ -19,11 +19,13 @@ namespace KCP_SERVER.Network
         private readonly IKCPCB* _kcp;          // KCP state (POINTER)
         private readonly GCHandle _selfHandle;  // user pointer için
         private readonly List<byte> _rxBuffer = new();
+        private readonly Action<string> _log;
 
-        public ClientSession(IPEndPoint remote, UdpClient udp)
+        public ClientSession(IPEndPoint remote, UdpClient udp, Action<string> log)
         {
             Remote = remote;
             _udp = udp;
+            _log = log;
 
             _selfHandle = GCHandle.Alloc(this);
 
@@ -112,7 +114,7 @@ namespace KCP_SERVER.Network
                             }
                             catch (CryptographicException)
                             {
-                                Console.WriteLine($"[SECURITY] Dropped invalid packet from {Remote}.");
+                                _log($"[SECURITY] Dropped invalid packet from {Remote}.");
                             }
                         }
                     }

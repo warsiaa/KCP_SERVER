@@ -1,19 +1,16 @@
-﻿using System;
-using KCP_SERVER.Network;
+using System;
+using System.Windows.Forms;
 
 namespace KCP_SERVER
 {
     internal static class Program
     {
+        [STAThread]
         static void Main()
         {
-            var server = new KcpServer(7777);
-            server.Start();
-
-            Console.WriteLine("KCP Server running. Press ENTER to stop.");
-            Console.ReadLine();
-
-            server.Stop();
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new MainForm());
         }
     }
 }
