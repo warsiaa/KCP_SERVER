@@ -1,3 +1,5 @@
+using System.Windows.Forms.DataVisualization.Charting;
+
 namespace KCP_SERVER
 {
     partial class MainForm
@@ -28,6 +30,8 @@ namespace KCP_SERVER
         /// </summary>
         private void InitializeComponent()
         {
+            ChartArea chartArea1 = new ChartArea();
+            Legend legend1 = new Legend();
             this.btnStart = new System.Windows.Forms.Button();
             this.btnStop = new System.Windows.Forms.Button();
             this.txtLog = new System.Windows.Forms.TextBox();
@@ -36,10 +40,15 @@ namespace KCP_SERVER
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.txtPort = new System.Windows.Forms.TextBox();
+            this.chartMetrics = new Chart();
+            this.seriesPacketLoss = new Series();
+            this.seriesLatency = new Series();
+            this.seriesTimeouts = new Series();
+            ((System.ComponentModel.ISupportInitialize)(this.chartMetrics)).BeginInit();
             this.SuspendLayout();
-            // 
+            //
             // btnStart
-            // 
+            //
             this.btnStart.Location = new System.Drawing.Point(12, 12);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(94, 29);
@@ -68,11 +77,11 @@ namespace KCP_SERVER
             this.txtLog.Name = "txtLog";
             this.txtLog.ReadOnly = true;
             this.txtLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtLog.Size = new System.Drawing.Size(776, 328);
+            this.txtLog.Size = new System.Drawing.Size(776, 182);
             this.txtLog.TabIndex = 2;
-            // 
+            //
             // lblStatus
-            // 
+            //
             this.lblStatus.AutoSize = true;
             this.lblStatus.Location = new System.Drawing.Point(12, 73);
             this.lblStatus.Name = "lblStatus";
@@ -114,12 +123,54 @@ namespace KCP_SERVER
             this.txtPort.Size = new System.Drawing.Size(94, 27);
             this.txtPort.TabIndex = 7;
             this.txtPort.Text = "7777";
-            // 
+            //
+            // chartMetrics
+            //
+            this.chartMetrics.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right))));
+            chartArea1.AxisX.IsMarginVisible = false;
+            chartArea1.AxisX.LabelStyle.Format = "HH:mm:ss";
+            chartArea1.Name = "ChartArea1";
+            this.chartMetrics.ChartAreas.Add(chartArea1);
+            legend1.Name = "Legend1";
+            this.chartMetrics.Legends.Add(legend1);
+            this.chartMetrics.Location = new System.Drawing.Point(12, 298);
+            this.chartMetrics.Name = "chartMetrics";
+            this.chartMetrics.Size = new System.Drawing.Size(776, 304);
+            this.chartMetrics.TabIndex = 8;
+            this.chartMetrics.Text = "Ağ İstatistikleri";
+            //
+            // seriesPacketLoss
+            //
+            this.seriesPacketLoss.ChartArea = "ChartArea1";
+            this.seriesPacketLoss.ChartType = SeriesChartType.Line;
+            this.seriesPacketLoss.Legend = "Legend1";
+            this.seriesPacketLoss.Name = "Paket Kaybı";
+            //
+            // seriesLatency
+            //
+            this.seriesLatency.ChartArea = "ChartArea1";
+            this.seriesLatency.ChartType = SeriesChartType.Line;
+            this.seriesLatency.Legend = "Legend1";
+            this.seriesLatency.Name = "Gecikme (ms)";
+            //
+            // seriesTimeouts
+            //
+            this.seriesTimeouts.ChartArea = "ChartArea1";
+            this.seriesTimeouts.ChartType = SeriesChartType.Line;
+            this.seriesTimeouts.Legend = "Legend1";
+            this.seriesTimeouts.Name = "Timeout";
+            this.chartMetrics.Series.Add(this.seriesPacketLoss);
+            this.chartMetrics.Series.Add(this.seriesLatency);
+            this.chartMetrics.Series.Add(this.seriesTimeouts);
+            //
             // MainForm
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(800, 614);
+            this.Controls.Add(this.chartMetrics);
             this.Controls.Add(this.txtPort);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -130,6 +181,7 @@ namespace KCP_SERVER
             this.Controls.Add(this.btnStart);
             this.Name = "MainForm";
             this.Text = "KCP Sunucu";
+            ((System.ComponentModel.ISupportInitialize)(this.chartMetrics)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -145,5 +197,9 @@ namespace KCP_SERVER
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txtPort;
+        private Chart chartMetrics;
+        private Series seriesPacketLoss;
+        private Series seriesLatency;
+        private Series seriesTimeouts;
     }
 }

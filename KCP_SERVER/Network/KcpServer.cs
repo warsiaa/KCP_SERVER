@@ -20,9 +20,17 @@ namespace KCP_SERVER.Network
         private Task? _receiveTask;
         private Task? _updateTask;
         private bool _stopped;
+        private readonly List<double> _latencySamples = new();
+        private uint _lastMetricsTimestamp;
+        private int _packetLossCounter;
+        private int _timeoutCounter;
+
+        private const uint MetricsIntervalMs = 1000;
+        private const uint ClientTimeoutMs = 10000;
 
         public event Action<string>? Log;
         public event Action<int>? ClientCountChanged;
+        public event Action<MetricSample>? MetricsUpdated;
 
         public int ClientCount => _clients.Count;
 
@@ -30,6 +38,7 @@ namespace KCP_SERVER.Network
         {
             _port = port;
             _udp = new UdpClient(new IPEndPoint(IPAddress.Any, port));
+            _lastMetricsTimestamp = Time.Now;
         }
 
         public void Start()
@@ -108,7 +117,11 @@ namespace KCP_SERVER.Network
                         NotifyClientCountChanged();
                     }
 
-                    session.Input(result.Buffer);
+                    bool accepted = session.Input(result.Buffer);
+                    if (!accepted)
+                    {
+                        Interlocked.Increment(ref _packetLossCounter);
+                    }
                 }
                 catch (OperationCanceledException)
                 {
@@ -132,7 +145,16 @@ namespace KCP_SERVER.Network
                     {
                         kv.Value.Update(now);
                         kv.Value.ProcessMessages(MessageHandler.Handle);
+
+                        var latency = kv.Value.GetLatency();
+                        if (latency.HasValue)
+                        {
+                            _latencySamples.Add(latency.Value);
+                        }
                     }
+
+                    RemoveTimedOutClients(now);
+                    PublishMetricsIfNeeded(now);
 
                     await Task.Delay(1, _cts.Token);
                 }
@@ -149,6 +171,64 @@ namespace KCP_SERVER.Network
         private void NotifyClientCountChanged()
         {
             ClientCountChanged?.Invoke(_clients.Count);
+        }
+
+        private void RemoveTimedOutClients(uint now)
+        {
+            var toRemove = new List<IPEndPoint>();
+
+            foreach (var client in _clients)
+            {
+                if (now - client.Value.LastReceiveAt > ClientTimeoutMs)
+                {
+                    toRemove.Add(client.Key);
+                }
+            }
+
+            foreach (var endpoint in toRemove)
+            {
+                if (_clients.TryRemove(endpoint, out var session))
+                {
+                    session.Dispose();
+                    Interlocked.Increment(ref _timeoutCounter);
+                    LogMessage($"[CLIENT] {endpoint} bağlantısı zaman aşımına uğradı.");
+                }
+            }
+
+            if (toRemove.Count > 0)
+            {
+                NotifyClientCountChanged();
+            }
+        }
+
+        private void PublishMetricsIfNeeded(uint now)
+        {
+            if (now - _lastMetricsTimestamp < MetricsIntervalMs)
+                return;
+
+            double averageLatency = 0;
+            if (_latencySamples.Count > 0)
+            {
+                double total = 0;
+                for (int i = 0; i < _latencySamples.Count; i++)
+                {
+                    total += _latencySamples[i];
+                }
+
+                averageLatency = total / _latencySamples.Count;
+            }
+
+            var sample = new MetricSample(
+                DateTime.Now,
+                Interlocked.Exchange(ref _packetLossCounter, 0),
+                averageLatency,
+                Interlocked.Exchange(ref _timeoutCounter, 0)
+            );
+
+            _latencySamples.Clear();
+            _lastMetricsTimestamp = now;
+
+            MetricsUpdated?.Invoke(sample);
         }
 
         private void LogMessage(string message)
