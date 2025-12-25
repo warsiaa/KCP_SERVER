@@ -7,6 +7,7 @@ namespace KCP_SERVER
     public partial class MainForm : Form
     {
         private KcpServer? _server;
+        private const int MaxChartPoints = 120;
 
         public MainForm()
         {
@@ -28,6 +29,7 @@ namespace KCP_SERVER
             _server = new KcpServer(port);
             _server.Log += OnServerLog;
             _server.ClientCountChanged += OnClientCountChanged;
+            _server.MetricsUpdated += OnMetricsUpdated;
             _server.Start();
 
             AppendLog($"Sunucu {port} portunda başlatıldı.");
@@ -45,6 +47,7 @@ namespace KCP_SERVER
 
             AppendLog("Sunucu durduruldu.");
             OnClientCountChanged(0);
+            ClearCharts();
             UpdateUiState();
         }
 
@@ -70,6 +73,31 @@ namespace KCP_SERVER
             lblClientCount.Text = count.ToString();
         }
 
+        private void OnMetricsUpdated(MetricSample sample)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action<MetricSample>(OnMetricsUpdated), sample);
+                return;
+            }
+
+            AddChartPoint(seriesPacketLoss, sample.Timestamp, sample.PacketLoss);
+            AddChartPoint(seriesLatency, sample.Timestamp, sample.AverageLatencyMs);
+            AddChartPoint(seriesTimeouts, sample.Timestamp, sample.TimeoutCount);
+        }
+
+        private void AddChartPoint(System.Windows.Forms.DataVisualization.Charting.Series series, DateTime timestamp, double value)
+        {
+            series.Points.AddXY(timestamp, value);
+
+            while (series.Points.Count > MaxChartPoints)
+            {
+                series.Points.RemoveAt(0);
+            }
+
+            chartMetrics.ChartAreas[0].RecalculateAxesScale();
+        }
+
         private void AppendLog(string message)
         {
             if (txtLog.TextLength > 0)
@@ -87,6 +115,13 @@ namespace KCP_SERVER
             btnStop.Enabled = running;
             txtPort.Enabled = !running;
             lblStatus.Text = running ? "Durum: Çalışıyor" : "Durum: Kapalı";
+        }
+
+        private void ClearCharts()
+        {
+            seriesPacketLoss.Points.Clear();
+            seriesLatency.Points.Clear();
+            seriesTimeouts.Points.Clear();
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
