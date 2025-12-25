@@ -1,16 +1,28 @@
 using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Windows.Forms;
 using KCP_SERVER.Network;
+using ScottPlot.Plottable;
 
 namespace KCP_SERVER
 {
     public partial class MainForm : Form
     {
         private KcpServer? _server;
+        private const int MaxChartPoints = 120;
+        private readonly List<double> _timePoints = new();
+        private readonly List<double> _packetLossPoints = new();
+        private readonly List<double> _latencyPoints = new();
+        private readonly List<double> _timeoutPoints = new();
+        private ScatterPlot? _packetLossScatter;
+        private ScatterPlot? _latencyScatter;
+        private ScatterPlot? _timeoutScatter;
 
         public MainForm()
         {
             InitializeComponent();
+            ConfigureChart();
             UpdateUiState();
         }
 
@@ -28,10 +40,26 @@ namespace KCP_SERVER
             _server = new KcpServer(port);
             _server.Log += OnServerLog;
             _server.ClientCountChanged += OnClientCountChanged;
+            _server.MetricsUpdated += OnMetricsUpdated;
             _server.Start();
 
             AppendLog($"Sunucu {port} portunda başlatıldı.");
             UpdateUiState();
+        }
+
+        private void ConfigureChart()
+        {
+            formsPlotMetrics.Plot.Title("Ağ İstatistikleri");
+            formsPlotMetrics.Plot.XLabel("Zaman");
+            formsPlotMetrics.Plot.YLabel("Değer");
+            formsPlotMetrics.Plot.Legend();
+            formsPlotMetrics.Plot.XAxis.DateTimeFormat(true);
+
+            _packetLossScatter = formsPlotMetrics.Plot.AddScatter(Array.Empty<double>(), Array.Empty<double>(), color: Color.OrangeRed, label: "Paket Kaybı");
+            _latencyScatter = formsPlotMetrics.Plot.AddScatter(Array.Empty<double>(), Array.Empty<double>(), color: Color.DeepSkyBlue, label: "Gecikme (ms)");
+            _timeoutScatter = formsPlotMetrics.Plot.AddScatter(Array.Empty<double>(), Array.Empty<double>(), color: Color.ForestGreen, label: "Timeout");
+
+            formsPlotMetrics.Refresh();
         }
 
         private void StopButton_Click(object sender, EventArgs e)
@@ -45,6 +73,7 @@ namespace KCP_SERVER
 
             AppendLog("Sunucu durduruldu.");
             OnClientCountChanged(0);
+            ClearCharts();
             UpdateUiState();
         }
 
@@ -70,6 +99,55 @@ namespace KCP_SERVER
             lblClientCount.Text = count.ToString();
         }
 
+        private void OnMetricsUpdated(MetricSample sample)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action<MetricSample>(OnMetricsUpdated), sample);
+                return;
+            }
+
+            AddChartPoint(sample.Timestamp, sample.PacketLoss, sample.AverageLatencyMs, sample.TimeoutCount);
+        }
+
+        private void AddChartPoint(DateTime timestamp, double packetLoss, double latency, double timeouts)
+        {
+            double timeValue = timestamp.ToOADate();
+
+            _timePoints.Add(timeValue);
+            _packetLossPoints.Add(packetLoss);
+            _latencyPoints.Add(latency);
+            _timeoutPoints.Add(timeouts);
+
+            TrimChartPoints();
+
+            UpdateScatter(_packetLossScatter, _packetLossPoints);
+            UpdateScatter(_latencyScatter, _latencyPoints);
+            UpdateScatter(_timeoutScatter, _timeoutPoints);
+
+            formsPlotMetrics.Refresh();
+        }
+
+        private void UpdateScatter(ScatterPlot? scatter, List<double> values)
+        {
+            if (scatter == null)
+                return;
+
+            scatter.Xs = _timePoints.ToArray();
+            scatter.Ys = values.ToArray();
+        }
+
+        private void TrimChartPoints()
+        {
+            while (_timePoints.Count > MaxChartPoints)
+            {
+                _timePoints.RemoveAt(0);
+                _packetLossPoints.RemoveAt(0);
+                _latencyPoints.RemoveAt(0);
+                _timeoutPoints.RemoveAt(0);
+            }
+        }
+
         private void AppendLog(string message)
         {
             if (txtLog.TextLength > 0)
@@ -87,6 +165,21 @@ namespace KCP_SERVER
             btnStop.Enabled = running;
             txtPort.Enabled = !running;
             lblStatus.Text = running ? "Durum: Çalışıyor" : "Durum: Kapalı";
+        }
+
+        private void ClearCharts()
+        {
+            _timePoints.Clear();
+            _packetLossPoints.Clear();
+            _latencyPoints.Clear();
+            _timeoutPoints.Clear();
+
+            UpdateScatter(_packetLossScatter, _packetLossPoints);
+            UpdateScatter(_latencyScatter, _latencyPoints);
+            UpdateScatter(_timeoutScatter, _timeoutPoints);
+
+            formsPlotMetrics.Plot.AxisAuto();
+            formsPlotMetrics.Refresh();
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)

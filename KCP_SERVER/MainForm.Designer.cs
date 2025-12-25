@@ -1,3 +1,5 @@
+using ScottPlot.WinForms;
+
 namespace KCP_SERVER
 {
     partial class MainForm
@@ -36,10 +38,11 @@ namespace KCP_SERVER
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.txtPort = new System.Windows.Forms.TextBox();
+            this.formsPlotMetrics = new FormsPlot();
             this.SuspendLayout();
-            // 
+            //
             // btnStart
-            // 
+            //
             this.btnStart.Location = new System.Drawing.Point(12, 12);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(94, 29);
@@ -68,11 +71,11 @@ namespace KCP_SERVER
             this.txtLog.Name = "txtLog";
             this.txtLog.ReadOnly = true;
             this.txtLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtLog.Size = new System.Drawing.Size(776, 328);
+            this.txtLog.Size = new System.Drawing.Size(776, 182);
             this.txtLog.TabIndex = 2;
-            // 
+            //
             // lblStatus
-            // 
+            //
             this.lblStatus.AutoSize = true;
             this.lblStatus.Location = new System.Drawing.Point(12, 73);
             this.lblStatus.Name = "lblStatus";
@@ -114,12 +117,25 @@ namespace KCP_SERVER
             this.txtPort.Size = new System.Drawing.Size(94, 27);
             this.txtPort.TabIndex = 7;
             this.txtPort.Text = "7777";
-            // 
+            //
+            // formsPlotMetrics
+            //
+            this.formsPlotMetrics.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right))));
+            this.formsPlotMetrics.DisplayScale = 1F;
+            this.formsPlotMetrics.Location = new System.Drawing.Point(12, 298);
+            this.formsPlotMetrics.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
+            this.formsPlotMetrics.Name = "formsPlotMetrics";
+            this.formsPlotMetrics.Size = new System.Drawing.Size(776, 304);
+            this.formsPlotMetrics.TabIndex = 8;
+            //
             // MainForm
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(800, 614);
+            this.Controls.Add(this.formsPlotMetrics);
             this.Controls.Add(this.txtPort);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -145,5 +161,6 @@ namespace KCP_SERVER
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txtPort;
+        private FormsPlot formsPlotMetrics;
     }
 }
