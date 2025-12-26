@@ -54,7 +54,7 @@ namespace KCP_SERVER
             formsPlotMetrics.Plot.XLabel("Zaman");
             formsPlotMetrics.Plot.YLabel("Değer");
             formsPlotMetrics.Plot.Legend.IsVisible = true;
-            formsPlotMetrics.Plot.Axes.DateTimeTicksBottom();
+            formsPlotMetrics.Plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.DateTimeAutomatic();
 
             RenderChart();
         }
@@ -170,10 +170,19 @@ namespace KCP_SERVER
 
             formsPlotMetrics.Plot.Clear();
 
-            _packetLossScatter = formsPlotMetrics.Plot.Add.Scatter(times, packetLossValues, label: "Paket Kaybı", color: Colors.OrangeRed);
-            _latencyScatter = formsPlotMetrics.Plot.Add.Scatter(times, latencyValues, label: "Gecikme (ms)", color: Colors.DeepSkyBlue);
-            _timeoutScatter = formsPlotMetrics.Plot.Add.Scatter(times, timeoutValues, label: "Timeout", color: Colors.ForestGreen);
+            _packetLossScatter = formsPlotMetrics.Plot.Add.Scatter(times, packetLossValues);
+            _packetLossScatter.Label = "Paket Kaybı";
+            _packetLossScatter.Color = Colors.OrangeRed;
 
+            _latencyScatter = formsPlotMetrics.Plot.Add.Scatter(times, latencyValues);
+            _latencyScatter.Label = "Gecikme (ms)";
+            _latencyScatter.Color = Colors.DeepSkyBlue;
+
+            _timeoutScatter = formsPlotMetrics.Plot.Add.Scatter(times, timeoutValues);
+            _timeoutScatter.Label = "Timeout";
+            _timeoutScatter.Color = Colors.ForestGreen;
+
+            formsPlotMetrics.Plot.Legend.IsVisible = true;
             formsPlotMetrics.Plot.Axes.AutoScale();
             formsPlotMetrics.Refresh();
         }
