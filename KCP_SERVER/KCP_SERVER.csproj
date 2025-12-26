@@ -1,17 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- WinForms uygulaması -->
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+
+    <!-- Windows hedefli .NET (ŞART) -->
+    <TargetFramework>net8.0-windows</TargetFramework>
+
+    <!-- WinForms aktif -->
+    <UseWindowsForms>true</UseWindowsForms>
+
+    <!-- Modern C# ayarları -->
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- KCP için unsafe -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Kcp-CSharp" Version="1.0.8" />
     <PackageReference Include="ScottPlot.WinForms" Version="4.1.81" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Grafik/chart kullanacaksan anlamlı -->
+    <Reference Include="System.Windows.Forms.DataVisualization" />
   </ItemGroup>
 
   <ItemGroup>
