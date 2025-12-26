@@ -20,12 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="Kcp-CSharp" Version="1.0.8" />
-    <PackageReference Include="ScottPlot.WinForms" Version="4.1.81" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Grafik/chart kullanacaksan anlamlı -->
-    <Reference Include="System.Windows.Forms.DataVisualization" />
+    <PackageReference Include="ScottPlot.WinForms" Version="5.0.15" />
   </ItemGroup>
 
   <ItemGroup>

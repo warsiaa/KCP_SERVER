@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using KCP_SERVER.Network;
-using ScottPlot.Plottable;
+using ScottPlot;
+using ScottPlot.Plottables;
 
 namespace KCP_SERVER
 {
@@ -15,9 +16,9 @@ namespace KCP_SERVER
         private readonly List<double> _packetLossPoints = new();
         private readonly List<double> _latencyPoints = new();
         private readonly List<double> _timeoutPoints = new();
-        private ScatterPlot? _packetLossScatter;
-        private ScatterPlot? _latencyScatter;
-        private ScatterPlot? _timeoutScatter;
+        private Scatter? _packetLossScatter;
+        private Scatter? _latencyScatter;
+        private Scatter? _timeoutScatter;
 
         public MainForm()
         {
@@ -52,14 +53,10 @@ namespace KCP_SERVER
             formsPlotMetrics.Plot.Title("Ağ İstatistikleri");
             formsPlotMetrics.Plot.XLabel("Zaman");
             formsPlotMetrics.Plot.YLabel("Değer");
-            formsPlotMetrics.Plot.Legend();
-            formsPlotMetrics.Plot.XAxis.DateTimeFormat(true);
+            formsPlotMetrics.Plot.Legend.IsVisible = true;
+            formsPlotMetrics.Plot.Axes.DateTimeTicksBottom();
 
-            _packetLossScatter = formsPlotMetrics.Plot.AddScatter(Array.Empty<double>(), Array.Empty<double>(), color: Color.OrangeRed, label: "Paket Kaybı");
-            _latencyScatter = formsPlotMetrics.Plot.AddScatter(Array.Empty<double>(), Array.Empty<double>(), color: Color.DeepSkyBlue, label: "Gecikme (ms)");
-            _timeoutScatter = formsPlotMetrics.Plot.AddScatter(Array.Empty<double>(), Array.Empty<double>(), color: Color.ForestGreen, label: "Timeout");
-
-            formsPlotMetrics.Refresh();
+            RenderChart();
         }
 
         private void StopButton_Click(object sender, EventArgs e)
@@ -121,23 +118,7 @@ namespace KCP_SERVER
 
             TrimChartPoints();
 
-            var times = _timePoints.ToArray();
-
-            UpdateScatter(_packetLossScatter, times, _packetLossPoints);
-            UpdateScatter(_latencyScatter, times, _latencyPoints);
-            UpdateScatter(_timeoutScatter, times, _timeoutPoints);
-
-            formsPlotMetrics.Plot.AxisAuto();
-            formsPlotMetrics.Refresh();
-        }
-
-        private void UpdateScatter(ScatterPlot? scatter, double[] times, List<double> values)
-        {
-            if (scatter == null)
-                return;
-
-            scatter.Xs = times;
-            scatter.Ys = values.ToArray();
+            RenderChart();
         }
 
         private void TrimChartPoints()
@@ -177,13 +158,23 @@ namespace KCP_SERVER
             _latencyPoints.Clear();
             _timeoutPoints.Clear();
 
-            var emptyTimes = Array.Empty<double>();
+            RenderChart();
+        }
 
-            UpdateScatter(_packetLossScatter, emptyTimes, _packetLossPoints);
-            UpdateScatter(_latencyScatter, emptyTimes, _latencyPoints);
-            UpdateScatter(_timeoutScatter, emptyTimes, _timeoutPoints);
+        private void RenderChart()
+        {
+            var times = _timePoints.ToArray();
+            var packetLossValues = _packetLossPoints.ToArray();
+            var latencyValues = _latencyPoints.ToArray();
+            var timeoutValues = _timeoutPoints.ToArray();
 
-            formsPlotMetrics.Plot.AxisAuto();
+            formsPlotMetrics.Plot.Clear();
+
+            _packetLossScatter = formsPlotMetrics.Plot.Add.Scatter(times, packetLossValues, label: "Paket Kaybı", color: Colors.OrangeRed);
+            _latencyScatter = formsPlotMetrics.Plot.Add.Scatter(times, latencyValues, label: "Gecikme (ms)", color: Colors.DeepSkyBlue);
+            _timeoutScatter = formsPlotMetrics.Plot.Add.Scatter(times, timeoutValues, label: "Timeout", color: Colors.ForestGreen);
+
+            formsPlotMetrics.Plot.Axes.AutoScale();
             formsPlotMetrics.Refresh();
         }
 
