@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Kcp-CSharp" Version="1.0.8" />
+    <PackageReference Include="ScottPlot.WinForms" Version="5.0.15" />
   </ItemGroup>
 
   <ItemGroup>

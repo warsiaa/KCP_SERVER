@@ -21,11 +21,15 @@ namespace KCP_SERVER.Network
         private readonly List<byte> _rxBuffer = new();
         private readonly Action<string> _log;
 
+        public uint LastReceiveAt { get; private set; }
+
         public ClientSession(IPEndPoint remote, UdpClient udp, Action<string> log)
         {
             Remote = remote;
             _udp = udp;
             _log = log;
+
+            LastReceiveAt = Time.Now;
 
             _selfHandle = GCHandle.Alloc(this);
 
@@ -61,12 +65,22 @@ namespace KCP_SERVER.Network
         // ================================
         // UDP -> KCP
         // ================================
-        public void Input(byte[] data)
+        public bool Input(byte[] data)
         {
+            int result;
             fixed (byte* p = data)
             {
-                KCP.ikcp_input(_kcp, p, data.Length);
+                result = KCP.ikcp_input(_kcp, p, data.Length);
             }
+
+            if (result >= 0)
+            {
+                LastReceiveAt = Time.Now;
+                return true;
+            }
+
+            _log($"[CLIENT] {Remote} geçersiz paket aldı (kod {result}).");
+            return false;
         }
 
         // ================================
@@ -75,6 +89,14 @@ namespace KCP_SERVER.Network
         public void Update(uint now)
         {
             KCP.ikcp_update(_kcp, now);
+        }
+
+        public double? GetLatency()
+        {
+            if (_kcp->rx_srtt <= 0)
+                return null;
+
+            return _kcp->rx_srtt;
         }
 
         // ================================
