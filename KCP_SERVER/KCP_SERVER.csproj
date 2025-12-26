@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="Kcp-CSharp" Version="1.0.8" />
+    <PackageReference Include="ScottPlot.WinForms" Version="4.1.81" />
   </ItemGroup>
 
   <ItemGroup>

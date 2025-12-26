@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Windows.Forms;
 using KCP_SERVER.Network;
+using ScottPlot.Plottable;
 
 namespace KCP_SERVER
 {
@@ -8,10 +11,18 @@ namespace KCP_SERVER
     {
         private KcpServer? _server;
         private const int MaxChartPoints = 120;
+        private readonly List<double> _timePoints = new();
+        private readonly List<double> _packetLossPoints = new();
+        private readonly List<double> _latencyPoints = new();
+        private readonly List<double> _timeoutPoints = new();
+        private ScatterPlot? _packetLossScatter;
+        private ScatterPlot? _latencyScatter;
+        private ScatterPlot? _timeoutScatter;
 
         public MainForm()
         {
             InitializeComponent();
+            ConfigureChart();
             UpdateUiState();
         }
 
@@ -34,6 +45,21 @@ namespace KCP_SERVER
 
             AppendLog($"Sunucu {port} portunda başlatıldı.");
             UpdateUiState();
+        }
+
+        private void ConfigureChart()
+        {
+            formsPlotMetrics.Plot.Title("Ağ İstatistikleri");
+            formsPlotMetrics.Plot.XLabel("Zaman");
+            formsPlotMetrics.Plot.YLabel("Değer");
+            formsPlotMetrics.Plot.Legend();
+            formsPlotMetrics.Plot.XAxis.DateTimeFormat(true);
+
+            _packetLossScatter = formsPlotMetrics.Plot.AddScatter(Array.Empty<double>(), Array.Empty<double>(), color: Color.OrangeRed, label: "Paket Kaybı");
+            _latencyScatter = formsPlotMetrics.Plot.AddScatter(Array.Empty<double>(), Array.Empty<double>(), color: Color.DeepSkyBlue, label: "Gecikme (ms)");
+            _timeoutScatter = formsPlotMetrics.Plot.AddScatter(Array.Empty<double>(), Array.Empty<double>(), color: Color.ForestGreen, label: "Timeout");
+
+            formsPlotMetrics.Refresh();
         }
 
         private void StopButton_Click(object sender, EventArgs e)
@@ -81,21 +107,48 @@ namespace KCP_SERVER
                 return;
             }
 
-            AddChartPoint(seriesPacketLoss, sample.Timestamp, sample.PacketLoss);
-            AddChartPoint(seriesLatency, sample.Timestamp, sample.AverageLatencyMs);
-            AddChartPoint(seriesTimeouts, sample.Timestamp, sample.TimeoutCount);
+            AddChartPoint(sample.Timestamp, sample.PacketLoss, sample.AverageLatencyMs, sample.TimeoutCount);
         }
 
-        private void AddChartPoint(System.Windows.Forms.DataVisualization.Charting.Series series, DateTime timestamp, double value)
+        private void AddChartPoint(DateTime timestamp, double packetLoss, double latency, double timeouts)
         {
-            series.Points.AddXY(timestamp, value);
+            double timeValue = timestamp.ToOADate();
 
-            while (series.Points.Count > MaxChartPoints)
+            _timePoints.Add(timeValue);
+            _packetLossPoints.Add(packetLoss);
+            _latencyPoints.Add(latency);
+            _timeoutPoints.Add(timeouts);
+
+            TrimChartPoints();
+
+            var times = _timePoints.ToArray();
+
+            UpdateScatter(_packetLossScatter, times, _packetLossPoints);
+            UpdateScatter(_latencyScatter, times, _latencyPoints);
+            UpdateScatter(_timeoutScatter, times, _timeoutPoints);
+
+            formsPlotMetrics.Plot.AxisAuto();
+            formsPlotMetrics.Refresh();
+        }
+
+        private void UpdateScatter(ScatterPlot? scatter, double[] times, List<double> values)
+        {
+            if (scatter == null)
+                return;
+
+            scatter.Xs = times;
+            scatter.Ys = values.ToArray();
+        }
+
+        private void TrimChartPoints()
+        {
+            while (_timePoints.Count > MaxChartPoints)
             {
-                series.Points.RemoveAt(0);
+                _timePoints.RemoveAt(0);
+                _packetLossPoints.RemoveAt(0);
+                _latencyPoints.RemoveAt(0);
+                _timeoutPoints.RemoveAt(0);
             }
-
-            chartMetrics.ChartAreas[0].RecalculateAxesScale();
         }
 
         private void AppendLog(string message)
@@ -119,9 +172,19 @@ namespace KCP_SERVER
 
         private void ClearCharts()
         {
-            seriesPacketLoss.Points.Clear();
-            seriesLatency.Points.Clear();
-            seriesTimeouts.Points.Clear();
+            _timePoints.Clear();
+            _packetLossPoints.Clear();
+            _latencyPoints.Clear();
+            _timeoutPoints.Clear();
+
+            var emptyTimes = Array.Empty<double>();
+
+            UpdateScatter(_packetLossScatter, emptyTimes, _packetLossPoints);
+            UpdateScatter(_latencyScatter, emptyTimes, _latencyPoints);
+            UpdateScatter(_timeoutScatter, emptyTimes, _timeoutPoints);
+
+            formsPlotMetrics.Plot.AxisAuto();
+            formsPlotMetrics.Refresh();
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
