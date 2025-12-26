@@ -1,12 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- WinForms uygulaması -->
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+
+    <!-- Windows hedefli .NET (ŞART) -->
+    <TargetFramework>net8.0-windows</TargetFramework>
+
+    <!-- WinForms aktif -->
+    <UseWindowsForms>true</UseWindowsForms>
+
+    <!-- Modern C# ayarları -->
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- KCP için unsafe -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>

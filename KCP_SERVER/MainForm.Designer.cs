@@ -30,6 +30,8 @@ namespace KCP_SERVER
         /// </summary>
         private void InitializeComponent()
         {
+            ChartArea chartArea1 = new ChartArea();
+            Legend legend1 = new Legend();
             this.btnStart = new System.Windows.Forms.Button();
             this.btnStop = new System.Windows.Forms.Button();
             this.txtLog = new System.Windows.Forms.TextBox();
@@ -146,6 +148,7 @@ namespace KCP_SERVER
             this.Controls.Add(this.btnStart);
             this.Name = "MainForm";
             this.Text = "KCP Sunucu";
+            ((System.ComponentModel.ISupportInitialize)(this.chartMetrics)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
